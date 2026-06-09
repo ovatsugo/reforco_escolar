@@ -1,3 +1,4 @@
+import sqlite3
 alunos = []
 id_alunos = 1
 
@@ -95,3 +96,7 @@ def listar_aluno():
         print(f'Idade: {aluno["idade"]}') 
     
     input('\nClique ENTER para continuar...')
+
+def remover_aluno():
+
+    remover_nome = input(str('Digite o nome do aluno que você remover:'))
