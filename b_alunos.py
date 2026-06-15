@@ -1,12 +1,25 @@
 import sqlite3
-alunos = []
-id_alunos = 1
+
+# Conexão com o banco
+conexao = sqlite3.connect("alunos.db")
+cursor = conexao.cursor()
+
+# Criação da tabela
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS alunos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    idade INTEGER NOT NULL
+)
+""")
+
+conexao.commit()
+
 
 def cadastro_aluno():
 
-    global id_alunos
-
     while True:
+
         nome = input("Digite o seu nome para o cadastro: ")
 
         if nome.replace(' ', '').isalpha():
@@ -15,88 +28,142 @@ def cadastro_aluno():
         print('Digite somente letras.')
 
     while True:
+
         idade = input('Digite sua idade: ')
 
         if idade.isdigit():
-            idade = int(idade)
 
+            idade = int(idade)
             break
+
         print('Digite somente numeros.')
 
-    aluno ={
-        "id": id_alunos,
-        "nome": nome,
-        "idade": idade
-    }
+    cursor.execute(
+        """
+        INSERT INTO alunos (nome, idade)
+        VALUES (?, ?)
+        """,
+        (nome, idade)
+    )
 
-    alunos.append(aluno)
-    id_alunos += 1
+    conexao.commit()
 
     print('Aluno cadastrado.')
     input('Clique ENTER para continuar...')
 
 
-def atualizar_alunos():
+def atualizar_aluno():
 
-    nome_Atualizado = input(
+    nome_busca = input(
         'Digite o nome do aluno que você deseja atualizar: '
     )
 
-    for aluno in alunos:
+    cursor.execute(
+        "SELECT * FROM alunos WHERE nome = ?",
+        (nome_busca,)
+    )
 
-        if aluno['nome'] == nome_Atualizado:
+    aluno = cursor.fetchone()
 
-            while True:
+    if aluno is None:
 
-                nome_novo = input(
-                    "Digite o novo nome para cadastro: "
-                )
-
-                if nome_novo.replace(' ', '').isalpha():
-                    break
-
-                print('Digite somente letras.')
-
-            while True:
-
-                idade_nova = input(
-                    'Digite sua nova idade: '
-                )
-
-                if idade_nova.isdigit():
-
-                    idade_nova = int(idade_nova)
-                    break
-
-                print('Digite somente numeros.')
-
-            aluno['nome'] = nome_novo
-            aluno['idade'] = idade_nova
-
-            print('Aluno atualizado com sucesso!')
-
-            return
-
-    print('Aluno não encontrado.')
-
-def listar_aluno():
-    
-    if len(alunos) == 0:
-        print('Nenhum aluno cadastrado')
-        input("digite ENTER para continuar...")
-
+        print('Aluno não encontrado.')
+        input('Digite ENTER para continuar...')
         return
-    
+
+    while True:
+
+        novo_nome = input('Digite o novo nome: ')
+
+        if novo_nome.replace(' ', '').isalpha():
+            break
+
+        print('Digite somente letras.')
+
+    while True:
+
+        nova_idade = input('Digite a nova idade: ')
+
+        if nova_idade.isdigit():
+
+            nova_idade = int(nova_idade)
+            break
+
+        print('Digite somente numeros.')
+
+    cursor.execute(
+        """
+        UPDATE alunos
+        SET nome = ?, idade = ?
+        WHERE nome = ?
+        """,
+        (novo_nome, nova_idade, nome_busca)
+    )
+
+    conexao.commit()
+
+    print('Aluno atualizado com sucesso!')
+    input('Digite ENTER para continuar...')
+
+
+def listar_alunos():
+
+    cursor.execute("SELECT * FROM alunos")
+
+    alunos = cursor.fetchall()
+
+    if len(alunos) == 0:
+
+        print('Nenhum aluno cadastrado.')
+        input('Digite ENTER para continuar...')
+        return
+
     print('\n===== LISTA DE ALUNOS =====')
 
     for aluno in alunos:
 
-        print(f'ID: {aluno["id"]}')
-        print(f'Nome: {aluno["nome"]}')
-        print(f'Idade: {aluno["idade"]}') 
-    
+        print(f'''
+ID: {aluno[0]}
+Nome: {aluno[1]}
+Idade: {aluno[2]}
+''')
+
     input('\nClique ENTER para continuar...')
+
 
 def remover_aluno():
 
-    remover_nome = input(str('Digite o nome do aluno que você remover:'))
+    id_busca = input(
+        'Digite o ID do aluno que deseja remover: '
+    )
+
+    if not id_busca.isdigit():
+
+        print('Digite apenas números.')
+        input('Digite ENTER para continuar...')
+        return
+
+    id_busca = int(id_busca)
+
+    cursor.execute(
+        "SELECT * FROM alunos WHERE id = ?",
+        (id_busca,)
+    )
+
+    aluno = cursor.fetchone()
+
+    if aluno is None:
+
+        print('Aluno não encontrado.')
+        input('Digite ENTER para continuar...')
+        return
+
+    cursor.execute(
+        "DELETE FROM alunos WHERE id = ?",
+        (id_busca,)
+    )
+
+    conexao.commit()
+
+    print('Aluno removido com sucesso!')
+    input('Digite ENTER para continuar...')

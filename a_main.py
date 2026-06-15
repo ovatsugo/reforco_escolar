@@ -20,13 +20,13 @@ def menu():
             cadastro_aluno()
 
         elif opcao == "2":
-            listar_aluno()
+            listar_alunos()
 
         elif opcao == "3":
-            atualizar_alunos()
+            atualizar_aluno()
 
         elif opcao == "4":
-            print("Remover aluno")
+            remover_aluno()
 
         elif opcao == "0":
             print("Saindo...")
