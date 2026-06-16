@@ -1,10 +1,8 @@
 import sqlite3
 
-# Conexão com o banco
 conexao = sqlite3.connect("alunos.db")
 cursor = conexao.cursor()
 
-# Criação da tabela
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS alunos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
