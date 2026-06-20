@@ -1,6 +1,4 @@
 import sqlite3
-<<<<<<< HEAD
-<<<<<<< HEAD
 import tkinter as tk
 from tkinter import messagebox
 
@@ -26,19 +24,6 @@ def cadastro_aluno():
     janela.resizable(False, False)
 
     tk.Label(janela, text="Cadastrar Aluno", font=("Arial", 14, "bold")).pack(pady=10)
-=======
-=======
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
-alunos = []
-id_alunos = 1
-
-def cadastro_aluno():
-
-    global id_alunos
-
-    while True:
-        nome = input("Digite o seu nome para o cadastro: ")
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
 
     tk.Label(janela, text="Nome:").pack()
     entrada_nome = tk.Entry(janela, width=30)
@@ -48,7 +33,6 @@ def cadastro_aluno():
     entrada_idade = tk.Entry(janela, width=30)
     entrada_idade.pack(pady=4)
 
-<<<<<<< HEAD
     def salvar():
 
         nome = entrada_nome.get().strip()
@@ -72,26 +56,6 @@ def cadastro_aluno():
         janela.destroy()
 
     tk.Button(janela, text="Salvar", command=salvar, width=15).pack(pady=12)
-=======
-    while True:
-        idade = input('Digite sua idade: ')
-
-        if idade.isdigit():
-            idade = int(idade)
-
-            break
-        print('Digite somente numeros.')
-
-    aluno ={
-        "id": id_alunos,
-        "nome": nome,
-        "idade": idade
-    }
-
-    alunos.append(aluno)
-    id_alunos += 1
-<<<<<<< HEAD
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
 
 def listar_alunos():
 
@@ -110,60 +74,8 @@ def listar_alunos():
 
     cursor.execute("SELECT * FROM alunos")
     alunos = cursor.fetchall()
-=======
 
-    print('Aluno cadastrado.')
-    input('Clique ENTER para continuar...')
-
-
-def atualizar_alunos():
-
-    nome_Atualizado = input(
-        'Digite o nome do aluno que você deseja atualizar: '
-    )
-
-    for aluno in alunos:
-
-        if aluno['nome'] == nome_Atualizado:
-
-            while True:
-
-                nome_novo = input(
-                    "Digite o novo nome para cadastro: "
-                )
-
-                if nome_novo.replace(' ', '').isalpha():
-                    break
-
-                print('Digite somente letras.')
-
-            while True:
-
-                idade_nova = input(
-                    'Digite sua nova idade: '
-                )
-
-                if idade_nova.isdigit():
-
-                    idade_nova = int(idade_nova)
-                    break
-
-                print('Digite somente numeros.')
-
-            aluno['nome'] = nome_novo
-            aluno['idade'] = idade_nova
-
-            print('Aluno atualizado com sucesso!')
-
-            return
-
-    print('Aluno não encontrado.')
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
-
-def listar_aluno():
-    
     if len(alunos) == 0:
-<<<<<<< HEAD
         caixa.insert(tk.END, "Nenhum aluno cadastrado.")
     else:
         for aluno in alunos:
@@ -175,9 +87,8 @@ def listar_aluno():
     caixa.config(state=tk.DISABLED)
 
 
-def atualizar_alunos():
+def atualizar_aluno():
 
-<<<<<<< HEAD
     janela = tk.Toplevel()
     janela.title("Atualizar Aluno")
     janela.geometry("350x280")
@@ -228,73 +139,10 @@ def atualizar_alunos():
         janela.destroy()
 
     tk.Button(janela, text="Atualizar", command=atualizar, width=15).pack(pady=10)
-=======
-    nome_Atualizado = input(
-        'Digite o nome do aluno que você deseja atualizar: '
-    )
 
-    for aluno in alunos:
-
-        if aluno['nome'] == nome_Atualizado:
-
-            while True:
-
-                nome_novo = input(
-                    "Digite o novo nome para cadastro: "
-                )
-
-                if nome_novo.replace(' ', '').isalpha():
-                    break
-
-                print('Digite somente letras.')
-
-            while True:
-
-                idade_nova = input(
-                    'Digite sua nova idade: '
-                )
-
-                if idade_nova.isdigit():
-
-                    idade_nova = int(idade_nova)
-                    break
-
-                print('Digite somente numeros.')
-
-            aluno['nome'] = nome_novo
-            aluno['idade'] = idade_nova
-
-            print('Aluno atualizado com sucesso!')
-
-            return
-
-    print('Aluno não encontrado.')
-
-def listar_aluno():
-    
-    if len(alunos) == 0:
-=======
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
-        print('Nenhum aluno cadastrado')
-        input("digite ENTER para continuar...")
-
-        return
-    
-    print('\n===== LISTA DE ALUNOS =====')
-
-    for aluno in alunos:
-
-        print(f'ID: {aluno["id"]}')
-        print(f'Nome: {aluno["nome"]}')
-        print(f'Idade: {aluno["idade"]}') 
-    
-    input('\nClique ENTER para continuar...')
-<<<<<<< HEAD
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
 
 def remover_aluno():
 
-<<<<<<< HEAD
     janela = tk.Toplevel()
     janela.title("Remover Aluno")
     janela.geometry("350x200")
@@ -334,12 +182,3 @@ def remover_aluno():
             janela.destroy()
 
     tk.Button(janela, text="Remover", command=remover, width=15).pack(pady=12)
-=======
-    remover_nome = input(str('Digite o nome do aluno que você remover:'))
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
-=======
-
-def remover_aluno():
-
-    remover_nome = input(str('Digite o nome do aluno que você remover:'))
->>>>>>> 0d392a8dd946d0ee0b77f340ff095d025ca77ef2
