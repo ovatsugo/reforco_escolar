@@ -5,7 +5,7 @@ def menu():
     while True:
 
         print("=" * 30)
-        print("         MENU")
+        print("         MENU ")
         print("=" * 30)
 
         print("1 - Cadastrar aluno")
