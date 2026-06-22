@@ -17,7 +17,6 @@ conexao.commit()
 
 def cadastro_aluno():
 
-    # Cria uma nova janela separada
     janela = tk.Toplevel()
     janela.title("Cadastrar Aluno")
     janela.geometry("350x220")
