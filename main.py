@@ -1,35 +1,47 @@
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
-
-# Importa as funções prontas dos colegas
-from b_alunos import cadastro_aluno, listar_alunos, atualizar_aluno, remover_aluno
-from b_prof import cadastro_professor, listar_professores, atualizar_professor, remover_professor
-
-# ============================================================
-#  RESPONSÁVEL: Integrante 5 — Líder
-#  ARQUIVO: main.py
-#
-#  - Importa diretamente as funções de b_alunos.py e b_prof.py
-#  - b_alunos.py e b_prof.py NÃO foram modificados
-#  - As telas de Sessões e Relatórios ficam aqui pois ainda
-#    não há arquivo de colega responsável por elas
-#  - Todos os dados vão para o mesmo banco.db
-# ============================================================
+import os
 
 
-# -------------------------------------------------------
-# FUNÇÃO 1 — inicializar_banco
-# Cria as tabelas de sessoes no banco.db caso não existam
-# (alunos e professores já são criadas pelos colegas)
-# -------------------------------------------------------
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+from b_alunos import cadastro_aluno, atualizar_aluno, remover_aluno
+from b_prof import cadastro_professor, atualizar_professor, remover_professor
+from e_relatorios import (
+    relatorio_por_aluno,
+    relatorio_por_professor,
+    relatorio_por_disciplina,
+    relatorio_realizadas,
+)
+
+conexao_main = sqlite3.connect("banco.db")
+cursor_main = conexao_main.cursor()
+
+
+# Incialização do banco
 
 def inicializar_banco():
 
-    conexao = sqlite3.connect("banco.db")
-    cursor = conexao.cursor()
+    cursor_main.execute("""
+        CREATE TABLE IF NOT EXISTS alunos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            idade INTEGER NOT NULL
+        )
+    """)
 
-    cursor.execute("""
+    cursor_main.execute("""
+        CREATE TABLE IF NOT EXISTS professores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            disciplina TEXT NOT NULL,
+            telefone TEXT NOT NULL
+        )
+    """)
+
+    cursor_main.execute("""
         CREATE TABLE IF NOT EXISTS sessoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             id_aluno INTEGER NOT NULL,
@@ -43,8 +55,16 @@ def inicializar_banco():
         )
     """)
 
-    conexao.commit()
-    conexao.close()
+    conexao_main.commit()
+
+
+
+def buscar(sql, params=()):
+    """Abre uma conexão nova, executa e fecha. Garante dados frescos."""
+    con = sqlite3.connect("banco.db")
+    resultado = con.execute(sql, params).fetchall()
+    con.close()
+    return resultado
 
 
 # -------------------------------------------------------
@@ -65,48 +85,16 @@ def menu_principal():
         font=("Arial", 16, "bold")
     ).pack(pady=20)
 
-    tk.Button(
-        janela,
-        text="Alunos",
-        width=20,
-        command=menu_alunos
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Professores / Voluntários",
-        width=20,
-        command=menu_professores
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Sessões de Reforço",
-        width=20,
-        command=menu_sessoes
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Relatórios",
-        width=20,
-        command=menu_relatorios
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Sair",
-        width=20,
-        command=janela.destroy
-    ).pack(pady=15)
+    tk.Button(janela, text="Alunos",                    width=20, command=menu_alunos).pack(pady=5)
+    tk.Button(janela, text="Professores / Voluntários", width=20, command=menu_professores).pack(pady=5)
+    tk.Button(janela, text="Sessões de Reforço",        width=20, command=menu_sessoes).pack(pady=5)
+    tk.Button(janela, text="Relatórios",                width=20, command=menu_relatorios).pack(pady=5)
+    tk.Button(janela, text="Sair",                      width=20, command=janela.destroy).pack(pady=15)
 
     janela.mainloop()
 
 
-# -------------------------------------------------------
-# FUNÇÃO 3 — menu_alunos
-# Chama as funções prontas do b_alunos.py do colega
-# -------------------------------------------------------
+# Listar usa conexão fresca; demais chamam b_alunos.py
 
 def menu_alunos():
 
@@ -115,51 +103,48 @@ def menu_alunos():
     janela.geometry("300x280")
     janela.resizable(False, False)
 
-    tk.Label(
-        janela,
-        text="CRUD DE ALUNOS",
-        font=("Arial", 14, "bold")
-    ).pack(pady=20)
+    tk.Label(janela, text="CRUD DE ALUNOS", font=("Arial", 14, "bold")).pack(pady=20)
 
-    tk.Button(
-        janela,
-        text="Cadastrar aluno",
-        width=20,
-        command=cadastro_aluno       # função do b_alunos.py
-    ).pack(pady=5)
+    tk.Button(janela, text="Cadastrar aluno", width=20, command=cadastro_aluno).pack(pady=5)
+    tk.Button(janela, text="Listar alunos",   width=20, command=listar_alunos_fresco).pack(pady=5)
+    tk.Button(janela, text="Atualizar aluno", width=20, command=atualizar_aluno).pack(pady=5)
+    tk.Button(janela, text="Remover aluno",   width=20, command=remover_aluno).pack(pady=5)
+    tk.Button(janela, text="Voltar",          width=20, command=janela.destroy).pack(pady=10)
 
-    tk.Button(
-        janela,
-        text="Listar alunos",
-        width=20,
-        command=listar_alunos        # função do b_alunos.py
-    ).pack(pady=5)
 
-    tk.Button(
-        janela,
-        text="Atualizar aluno",
-        width=20,
-        command=atualizar_aluno      # função do b_alunos.py
-    ).pack(pady=5)
+def listar_alunos_fresco():
+    """Lista alunos com conexão nova — sempre mostra dados atualizados."""
 
-    tk.Button(
-        janela,
-        text="Remover aluno",
-        width=20,
-        command=remover_aluno        # função do b_alunos.py
-    ).pack(pady=5)
+    janela = tk.Toplevel()
+    janela.title("Lista de Alunos")
+    janela.geometry("400x350")
 
-    tk.Button(
-        janela,
-        text="Voltar",
-        width=20,
-        command=janela.destroy
-    ).pack(pady=10)
+    tk.Label(janela, text="Lista de Alunos", font=("Arial", 14, "bold")).pack(pady=10)
+
+    barra = tk.Scrollbar(janela)
+    barra.pack(side=tk.RIGHT, fill=tk.Y)
+
+    caixa = tk.Text(janela, yscrollcommand=barra.set, width=45, height=18)
+    caixa.pack(padx=10)
+    barra.config(command=caixa.yview)
+
+    alunos = buscar("SELECT * FROM alunos")
+
+    if not alunos:
+        caixa.insert(tk.END, "Nenhum aluno cadastrado.")
+    else:
+        for aluno in alunos:
+            caixa.insert(tk.END, f"ID: {aluno[0]}\n")
+            caixa.insert(tk.END, f"Nome: {aluno[1]}\n")
+            caixa.insert(tk.END, f"Idade: {aluno[2]}\n")
+            caixa.insert(tk.END, "-" * 30 + "\n")
+
+    caixa.config(state=tk.DISABLED)
 
 
 # -------------------------------------------------------
 # FUNÇÃO 4 — menu_professores
-# Chama as funções prontas do b_prof.py do colega
+# Listar usa conexão fresca; demais chamam b_prof.py
 # -------------------------------------------------------
 
 def menu_professores():
@@ -169,54 +154,46 @@ def menu_professores():
     janela.geometry("300x280")
     janela.resizable(False, False)
 
-    tk.Label(
-        janela,
-        text="CRUD DE PROFESSORES",
-        font=("Arial", 14, "bold")
-    ).pack(pady=20)
+    tk.Label(janela, text="CRUD DE PROFESSORES", font=("Arial", 14, "bold")).pack(pady=20)
 
-    tk.Button(
-        janela,
-        text="Cadastrar professor",
-        width=20,
-        command=cadastro_professor   # função do b_prof.py
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Listar professores",
-        width=20,
-        command=listar_professores   # função do b_prof.py
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Atualizar professor",
-        width=20,
-        command=atualizar_professor  # função do b_prof.py
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Remover professor",
-        width=20,
-        command=remover_professor    # função do b_prof.py
-    ).pack(pady=5)
-
-    tk.Button(
-        janela,
-        text="Voltar",
-        width=20,
-        command=janela.destroy
-    ).pack(pady=10)
+    tk.Button(janela, text="Cadastrar professor", width=20, command=cadastro_professor).pack(pady=5)
+    tk.Button(janela, text="Listar professores",  width=20, command=listar_professores_fresco).pack(pady=5)
+    tk.Button(janela, text="Atualizar professor", width=20, command=atualizar_professor).pack(pady=5)
+    tk.Button(janela, text="Remover professor",   width=20, command=remover_professor).pack(pady=5)
+    tk.Button(janela, text="Voltar",              width=20, command=janela.destroy).pack(pady=10)
 
 
-# -------------------------------------------------------
-# FUNÇÃO 5 (extra do líder) — menu_sessoes + menu_relatorios
-# Telas implementadas aqui pois os colegas ainda não
-# têm arquivos para sessões e relatórios
-# Todas conectam no mesmo banco.db
-# -------------------------------------------------------
+def listar_professores_fresco():
+    """Lista professores com conexão nova — sempre mostra dados atualizados."""
+
+    janela = tk.Toplevel()
+    janela.title("Lista de Professores")
+    janela.geometry("420x350")
+
+    tk.Label(janela, text="Lista de Professores", font=("Arial", 14, "bold")).pack(pady=10)
+
+    barra = tk.Scrollbar(janela)
+    barra.pack(side=tk.RIGHT, fill=tk.Y)
+
+    caixa = tk.Text(janela, yscrollcommand=barra.set, width=48, height=18)
+    caixa.pack(padx=10)
+    barra.config(command=caixa.yview)
+
+    professores = buscar("SELECT * FROM professores")
+
+    if not professores:
+        caixa.insert(tk.END, "Nenhum professor cadastrado.")
+    else:
+        for p in professores:
+            caixa.insert(tk.END, f"ID: {p[0]}\n")
+            caixa.insert(tk.END, f"Nome: {p[1]}\n")
+            caixa.insert(tk.END, f"Disciplina: {p[2]}\n")
+            caixa.insert(tk.END, f"Telefone: {p[3]}\n")
+            caixa.insert(tk.END, "-" * 30 + "\n")
+
+    caixa.config(state=tk.DISABLED)
+
+
 
 def menu_sessoes():
 
@@ -225,18 +202,13 @@ def menu_sessoes():
     janela.geometry("300x280")
     janela.resizable(False, False)
 
-    tk.Label(
-        janela,
-        text="SESSÕES DE REFORÇO",
-        font=("Arial", 14, "bold")
-    ).pack(pady=20)
+    tk.Label(janela, text="SESSÕES DE REFORÇO", font=("Arial", 14, "bold")).pack(pady=20)
 
     tk.Button(janela, text="Agendar sessão",   width=20, command=tela_agendar_sessao).pack(pady=5)
     tk.Button(janela, text="Listar sessões",   width=20, command=tela_listar_sessoes).pack(pady=5)
     tk.Button(janela, text="Atualizar sessão", width=20, command=tela_atualizar_sessao).pack(pady=5)
     tk.Button(janela, text="Cancelar sessão",  width=20, command=tela_cancelar_sessao).pack(pady=5)
-
-    tk.Button(janela, text="Voltar", width=20, command=janela.destroy).pack(pady=10)
+    tk.Button(janela, text="Voltar",           width=20, command=janela.destroy).pack(pady=10)
 
 
 def tela_agendar_sessao():
@@ -248,31 +220,20 @@ def tela_agendar_sessao():
 
     tk.Label(janela, text="Agendar Sessão", font=("Arial", 14, "bold")).pack(pady=10)
 
-    # Frame que vai conter os menus de aluno e professor
-    # É recriado toda vez que o usuário atualiza a lista
     frame_menus = tk.Frame(janela)
     frame_menus.pack()
 
     aluno_var = tk.StringVar()
     prof_var = tk.StringVar()
-
-    # Guarda referência dos menus para poder recriar
     menus = {}
 
     def carregar_menus():
-        """
-        Busca alunos e professores do banco nesse exato momento.
-        Chamada na abertura e quando o usuário clica em 'Atualizar lista'.
-        """
 
-        # Limpa os widgets anteriores do frame
         for widget in frame_menus.winfo_children():
             widget.destroy()
 
-        conexao = sqlite3.connect("banco.db")
-        alunos = conexao.execute("SELECT id, nome FROM alunos").fetchall()
-        professores = conexao.execute("SELECT id, nome, disciplina FROM professores").fetchall()
-        conexao.close()
+        alunos = buscar("SELECT id, nome FROM alunos")
+        professores = buscar("SELECT id, nome, disciplina FROM professores")
 
         if not alunos:
             tk.Label(frame_menus, text="Nenhum aluno cadastrado ainda.", fg="red").pack()
@@ -294,11 +255,8 @@ def tela_agendar_sessao():
             menus["prof"].config(width=28)
             menus["prof"].pack(pady=4)
 
-    # Carrega a lista ao abrir a janela
     carregar_menus()
 
-    # Botão para recarregar caso o usuário tenha cadastrado alunos
-    # depois de abrir essa janela
     tk.Button(
         janela,
         text="↻ Atualizar lista de alunos/professores",
@@ -329,28 +287,19 @@ def tela_agendar_sessao():
             messagebox.showerror("Erro", "Data e horário são obrigatórios.")
             return
 
-        conexao = sqlite3.connect("banco.db")
-        cursor = conexao.cursor()
-
-        nome_aluno = cursor.execute(
-            "SELECT nome FROM alunos WHERE id = ?", (id_aluno,)
-        ).fetchone()[0]
-
-        prof = cursor.execute(
-            "SELECT nome, disciplina FROM professores WHERE id = ?", (id_professor,)
-        ).fetchone()
-
+        nome_aluno = buscar("SELECT nome FROM alunos WHERE id = ?", (id_aluno,))[0][0]
+        prof = buscar("SELECT nome, disciplina FROM professores WHERE id = ?", (id_professor,))[0]
         nome_professor = prof[0]
         disciplina = prof[1]
 
-        cursor.execute("""
+        con = sqlite3.connect("banco.db")
+        con.execute("""
             INSERT INTO sessoes
             (id_aluno, nome_aluno, id_professor, nome_professor, disciplina, data, horario, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (id_aluno, nome_aluno, id_professor, nome_professor, disciplina, data, horario, "agendada"))
-
-        conexao.commit()
-        conexao.close()
+        con.commit()
+        con.close()
 
         messagebox.showinfo("Sucesso", f"Sessão agendada!\n{nome_aluno} com {nome_professor}\n{data} às {horario}")
         janela.destroy()
@@ -373,9 +322,7 @@ def tela_listar_sessoes():
     caixa.pack(padx=10)
     barra.config(command=caixa.yview)
 
-    conexao = sqlite3.connect("banco.db")
-    sessoes = conexao.execute("SELECT * FROM sessoes").fetchall()
-    conexao.close()
+    sessoes = buscar("SELECT * FROM sessoes")
 
     if not sessoes:
         caixa.insert(tk.END, "Nenhuma sessão agendada.")
@@ -425,29 +372,24 @@ def tela_atualizar_sessao():
             return
 
         id_busca = int(id_busca)
+        sessao = buscar("SELECT * FROM sessoes WHERE id = ?", (id_busca,))
 
-        conexao = sqlite3.connect("banco.db")
-        cursor = conexao.cursor()
-
-        sessao = cursor.execute(
-            "SELECT * FROM sessoes WHERE id = ?", (id_busca,)
-        ).fetchone()
-
-        if sessao is None:
-            conexao.close()
+        if not sessao:
             messagebox.showerror("Erro", "Sessão não encontrada.")
             return
 
+        sessao = sessao[0]
         nova_data = entrada_data.get().strip() or sessao[6]
         novo_horario = entrada_horario.get().strip() or sessao[7]
         novo_status = status_var.get()
 
-        cursor.execute(
+        con = sqlite3.connect("banco.db")
+        con.execute(
             "UPDATE sessoes SET data = ?, horario = ?, status = ? WHERE id = ?",
             (nova_data, novo_horario, novo_status, id_busca)
         )
-        conexao.commit()
-        conexao.close()
+        con.commit()
+        con.close()
 
         messagebox.showinfo("Sucesso", "Sessão atualizada com sucesso!")
         janela.destroy()
@@ -477,31 +419,25 @@ def tela_cancelar_sessao():
             return
 
         id_busca = int(id_busca)
+        sessao = buscar("SELECT * FROM sessoes WHERE id = ?", (id_busca,))
 
-        conexao = sqlite3.connect("banco.db")
-        cursor = conexao.cursor()
-
-        sessao = cursor.execute(
-            "SELECT * FROM sessoes WHERE id = ?", (id_busca,)
-        ).fetchone()
-
-        if sessao is None:
-            conexao.close()
+        if not sessao:
             messagebox.showerror("Erro", "Sessão não encontrada.")
             return
 
+        sessao = sessao[0]
         confirmacao = messagebox.askyesno(
             "Confirmar",
             f"Deseja cancelar a sessão de '{sessao[2]}' em {sessao[6]}?"
         )
 
         if confirmacao:
-            cursor.execute("DELETE FROM sessoes WHERE id = ?", (id_busca,))
-            conexao.commit()
+            con = sqlite3.connect("banco.db")
+            con.execute("DELETE FROM sessoes WHERE id = ?", (id_busca,))
+            con.commit()
+            con.close()
             messagebox.showinfo("Sucesso", "Sessão cancelada e removida!")
             janela.destroy()
-
-        conexao.close()
 
     tk.Button(janela, text="Cancelar Sessão", command=cancelar, width=18).pack(pady=12)
 
@@ -513,180 +449,14 @@ def menu_relatorios():
     janela.geometry("300x280")
     janela.resizable(False, False)
 
-    tk.Label(
-        janela,
-        text="RELATÓRIOS",
-        font=("Arial", 14, "bold")
-    ).pack(pady=20)
+    tk.Label(janela, text="RELATÓRIOS", font=("Arial", 14, "bold")).pack(pady=20)
 
-    tk.Button(janela, text="Por aluno",               width=20, command=tela_relatorio_por_aluno).pack(pady=5)
-    tk.Button(janela, text="Por professor",           width=20, command=tela_relatorio_por_professor).pack(pady=5)
-    tk.Button(janela, text="Atendimentos realizados", width=20, command=tela_relatorio_realizadas).pack(pady=5)
-    tk.Button(janela, text="Por disciplina",          width=20, command=tela_relatorio_por_disciplina).pack(pady=5)
-
-    tk.Button(janela, text="Voltar", width=20, command=janela.destroy).pack(pady=10)
-
-
-# Função auxiliar — abre janela de resultado com barra de rolagem
-def abrir_resultado(titulo, conteudo):
-
-    janela = tk.Toplevel()
-    janela.title(titulo)
-    janela.geometry("440x360")
-
-    tk.Label(janela, text=titulo, font=("Arial", 13, "bold")).pack(pady=10)
-
-    barra = tk.Scrollbar(janela)
-    barra.pack(side=tk.RIGHT, fill=tk.Y)
-
-    caixa = tk.Text(janela, yscrollcommand=barra.set, width=52, height=19)
-    caixa.pack(padx=10)
-    barra.config(command=caixa.yview)
-
-    caixa.insert(tk.END, conteudo)
-    caixa.config(state=tk.DISABLED)
-
-
-def tela_relatorio_por_aluno():
-
-    janela = tk.Toplevel()
-    janela.title("Relatório por Aluno")
-    janela.geometry("350x160")
-    janela.resizable(False, False)
-
-    tk.Label(janela, text="Relatório por Aluno", font=("Arial", 13, "bold")).pack(pady=10)
-    tk.Label(janela, text="Nome do aluno (ou parte):").pack()
-
-    entrada = tk.Entry(janela, width=30)
-    entrada.pack(pady=4)
-
-    def buscar():
-
-        busca = entrada.get().strip().lower()
-
-        conexao = sqlite3.connect("banco.db")
-        sessoes = conexao.execute("SELECT * FROM sessoes").fetchall()
-        conexao.close()
-
-        conteudo = ""
-        for s in sessoes:
-            if busca in s[2].lower():
-                conteudo += f"ID: {s[0]}  |  Status: {s[8].upper()}\n"
-                conteudo += f"Professor: {s[4]}\n"
-                conteudo += f"Disciplina: {s[5]}\n"
-                conteudo += f"Data: {s[6]} às {s[7]}\n"
-                conteudo += "-" * 38 + "\n"
-
-        if not conteudo:
-            conteudo = f"Nenhuma sessão encontrada para '{busca}'."
-
-        janela.destroy()
-        abrir_resultado(f"Sessões — {busca}", conteudo)
-
-    tk.Button(janela, text="Buscar", command=buscar, width=15).pack(pady=10)
-
-
-def tela_relatorio_por_professor():
-
-    janela = tk.Toplevel()
-    janela.title("Relatório por Professor")
-    janela.geometry("350x160")
-    janela.resizable(False, False)
-
-    tk.Label(janela, text="Relatório por Professor", font=("Arial", 13, "bold")).pack(pady=10)
-    tk.Label(janela, text="Nome do professor (ou parte):").pack()
-
-    entrada = tk.Entry(janela, width=30)
-    entrada.pack(pady=4)
-
-    def buscar():
-
-        busca = entrada.get().strip().lower()
-
-        conexao = sqlite3.connect("banco.db")
-        sessoes = conexao.execute("SELECT * FROM sessoes").fetchall()
-        conexao.close()
-
-        conteudo = ""
-        total = 0
-        for s in sessoes:
-            if busca in s[4].lower():
-                conteudo += f"ID: {s[0]}  |  Status: {s[8].upper()}\n"
-                conteudo += f"Aluno: {s[2]}\n"
-                conteudo += f"Disciplina: {s[5]}\n"
-                conteudo += f"Data: {s[6]} às {s[7]}\n"
-                conteudo += "-" * 38 + "\n"
-                total += 1
-
-        if not conteudo:
-            conteudo = f"Nenhuma sessão encontrada para '{busca}'."
-        else:
-            conteudo += f"\nTotal de sessões: {total}"
-
-        janela.destroy()
-        abrir_resultado(f"Sessões — {busca}", conteudo)
-
-    tk.Button(janela, text="Buscar", command=buscar, width=15).pack(pady=10)
-
-
-def tela_relatorio_realizadas():
-
-    conexao = sqlite3.connect("banco.db")
-    sessoes = conexao.execute(
-        "SELECT * FROM sessoes WHERE status = 'realizada'"
-    ).fetchall()
-    conexao.close()
-
-    conteudo = ""
-
-    if not sessoes:
-        conteudo = "Nenhuma sessão marcada como realizada ainda."
-    else:
-        conteudo += f"Total de atendimentos realizados: {len(sessoes)}\n"
-        conteudo += "=" * 38 + "\n"
-        for s in sessoes:
-            conteudo += f"- {s[2]} com {s[4]} | {s[5]} | {s[6]}\n"
-
-    abrir_resultado("Atendimentos Realizados", conteudo)
-
-
-def tela_relatorio_por_disciplina():
-
-    janela = tk.Toplevel()
-    janela.title("Relatório por Disciplina")
-    janela.geometry("350x160")
-    janela.resizable(False, False)
-
-    tk.Label(janela, text="Relatório por Disciplina", font=("Arial", 13, "bold")).pack(pady=10)
-    tk.Label(janela, text="Disciplina (ou parte):").pack()
-
-    entrada = tk.Entry(janela, width=30)
-    entrada.pack(pady=4)
-
-    def buscar():
-
-        busca = entrada.get().strip().lower()
-
-        conexao = sqlite3.connect("banco.db")
-        sessoes = conexao.execute("SELECT * FROM sessoes").fetchall()
-        conexao.close()
-
-        conteudo = ""
-        for s in sessoes:
-            if busca in s[5].lower():
-                conteudo += f"ID: {s[0]}  |  Status: {s[8].upper()}\n"
-                conteudo += f"Aluno: {s[2]}\n"
-                conteudo += f"Professor: {s[4]}\n"
-                conteudo += f"Data: {s[6]} às {s[7]}\n"
-                conteudo += "-" * 38 + "\n"
-
-        if not conteudo:
-            conteudo = f"Nenhuma sessão encontrada para '{busca}'."
-
-        janela.destroy()
-        abrir_resultado(f"Sessões de {busca}", conteudo)
-
-    tk.Button(janela, text="Buscar", command=buscar, width=15).pack(pady=10)
+    # Chama diretamente as funções do e_relatorios.py
+    tk.Button(janela, text="Por aluno",               width=20, command=relatorio_por_aluno).pack(pady=5)
+    tk.Button(janela, text="Por professor",           width=20, command=relatorio_por_professor).pack(pady=5)
+    tk.Button(janela, text="Atendimentos realizados", width=20, command=relatorio_realizadas).pack(pady=5)
+    tk.Button(janela, text="Por disciplina",          width=20, command=relatorio_por_disciplina).pack(pady=5)
+    tk.Button(janela, text="Voltar",                  width=20, command=janela.destroy).pack(pady=10)
 
 
 # Ponto de entrada
